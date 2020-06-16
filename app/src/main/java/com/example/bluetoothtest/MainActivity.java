@@ -24,6 +24,7 @@ import com.clj.fastble.callback.BleScanCallback;
 import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.scan.BleScanRuleConfig;
 import com.example.bluetoothtest.Models.Usb.UsbBroadCast;
+import com.example.bluetoothtest.Models.bleCallBacks.Accu_chek_Guide.AccuCheckBleGattCallBack;
 import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.verioFlex.OneTouchVerioFlexBleCallBack;
 import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.verioReflect.OneTouchVerioReflectBleCallBack;
 import com.example.bluetoothtest.Models.bleCallBacks.Oxymeter.OxymeterBleGattCallback;
@@ -44,8 +45,12 @@ public class MainActivity extends AppCompatActivity implements LoadingDataInterf
     public static final String ONE_TOUCH_VERIO_FLEX_MAC_ADDRESS = "F2:81:36:C8:3E:80";
     public static final String ONE_TOUCH_VERIO_REFLECT_MAC_ADDRESS = "FD:25:BE:48:78:51";
 
-    private static final String MAC_ADDRESS = "C8:7F:DE:AC:AE:DD";
-    private static final String OXY_MAC_ADDRESS = "98:7B:F3:6B:33:4D";
+    private static final String SLEEP_BAND_MAC_ADDRESS = "DB:2A:2D:69:E9:E4";
+
+    private static final String OXY_MAC_ADDRESS = "98:7B:F3:6B:33:4";
+
+    private static final String ACCU_CHEK_MAC_ADRESS = "50:51:A9:7C:60:62";
+
 
     public final int REQUEST_CODE_ASK_MULTIPLE_PERMISSIONS = 50;
 
@@ -130,9 +135,14 @@ public class MainActivity extends AppCompatActivity implements LoadingDataInterf
                     BleManager.getInstance().connect(bleDevice, new OxymeterBleGattCallback());
                     break;
 
-                case MAC_ADDRESS:
+                case SLEEP_BAND_MAC_ADDRESS:
 
                     //BleManager.getInstance().connect(bleDevice, new SleepBandBleCallBack());
+                    break;
+
+                case ACCU_CHEK_MAC_ADRESS:
+
+                    BleManager.getInstance().connect(bleDevice, new AccuCheckBleGattCallBack());
                     break;
 
 
@@ -227,10 +237,16 @@ public class MainActivity extends AppCompatActivity implements LoadingDataInterf
         App.getContext().registerReceiver(usbBroadCast, new IntentFilter(UsbBroadCast.ACTION_USB_PERMISSION));
     }
 
+
     @Override
     protected void onStop() {
         super.onStop();
-        unregisterReceiver(usbBroadCast);
+        try {
+            unregisterReceiver(usbBroadCast);
+        }catch (Exception E){
+
+        }
+
     }
 
     @Override

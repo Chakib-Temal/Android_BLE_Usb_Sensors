@@ -54,7 +54,7 @@ public class OneTouchVerioReflectBleCallBack extends BleModelCallBack {
         @Override
         public void onCharacteristicChanged(byte[] data) {
             Log.i(TAG, "onCharacteristicChanged");
-            Log.i("Messages   ", Arrays.toString(data));
+            Log.i(TAG, Arrays.toString(data));
 
             //Log.i(TAG, "Change notification for VERIO: " + JoH.bytesToHex(data));
 

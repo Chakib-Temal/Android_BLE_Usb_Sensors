@@ -53,7 +53,10 @@ public class UsbBroadCast extends BroadcastReceiver {
 
                     usbSensor.writeInitial(5000);
                     usbSensor.readInitial( new byte[128], 5000);
+                    //usbSensor.read( new byte[54], 5000);
 
+                    usbSensor.getBuildAssociation();
+                    usbSensor.read( new byte[1024], 5000);
 
 
                     MainActivity.writeTextSucces("Succes");

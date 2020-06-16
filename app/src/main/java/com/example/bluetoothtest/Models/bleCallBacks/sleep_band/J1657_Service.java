@@ -146,7 +146,7 @@ public class J1657_Service {
 
         try {
 
-            File heartRateDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS), "/heartRateData.csv");
+            File heartRateDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "/heartRateData.csv");
 
             //File heartRateDateFile = new File("/data/data/fr.semantic.ecare.app.android/sample" + "/heartRateDateFile.txt");
             //File heartRateDataFile = new File("/data/data/fr.semantic.ecare.app.android/sample" + "/heartRateDataFile.txt");
@@ -213,7 +213,7 @@ public class J1657_Service {
             //FileWriter writer3 = new FileWriter(breathDateFile);
             //FileWriter writer4 = new FileWriter(breathDatafile);
 
-            File breathDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/breathDateData.csv");
+            File breathDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/breathDateData.csv");
             breathDataFile.createNewFile();
             FileWriter breathDataFileWriter = new FileWriter(breathDataFile);
 
@@ -314,7 +314,7 @@ public class J1657_Service {
     public static void saveOutOfBedTextInternal(){
 
         try {
-            File outOfBedDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/outOfBedData.csv");
+            File outOfBedDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/outOfBedData.csv");
 
             outOfBedDataFile.createNewFile();
 
@@ -399,7 +399,7 @@ public class J1657_Service {
 
     public static void saveRolloverStorageTextInternal(){
         try {
-            File firstDateFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/RolloverStorageData.csv");
+            File firstDateFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/RolloverStorageData.csv");
 
             firstDateFile.createNewFile();
 

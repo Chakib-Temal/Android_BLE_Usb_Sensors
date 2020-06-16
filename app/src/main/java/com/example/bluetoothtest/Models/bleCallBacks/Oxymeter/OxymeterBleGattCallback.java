@@ -87,7 +87,7 @@ public class OxymeterBleGattCallback extends BleModelCallBack {
     private void saveOxymeterData(OXY measure){
 
         try {
-            File oxymeterDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS) + "/oxymeterData.csv");
+            File oxymeterDataFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS) + "/oxymeterData.csv");
 
             if (!oxymeterDataFile.exists()) {
                 try {
