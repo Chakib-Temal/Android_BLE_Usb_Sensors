@@ -14,6 +14,8 @@ import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
 import com.example.bluetoothtest.MainActivity;
 import com.example.bluetoothtest.Models.bleCallBacks.BleModelCallBack;
+import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.GlucoseReadingRx;
+import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.JoH;
 
 import java.util.Arrays;
 import java.util.List;
@@ -28,7 +30,10 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
     private static final String GLUCOSE_SERVICE = ("00001808-0000-1000-8000-00805f9b34fb");
     private static final String DATE_TIME_CHARACTERISTIC = ("00002a08-0000-1000-8000-00805f9b34fb");
+    private CurrentTimeRx ct;
     private boolean timeAlreadyRead = false;
+
+
 
     private static final String GLUCOSE_CHARACTERISTIC = ("00002a18-0000-1000-8000-00805f9b34fb");
     private static final String CONTEXT_CHARACTERISTIC = ("00002a34-0000-1000-8000-00805f9b34fb");
@@ -172,7 +177,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
     };
 
 
-    public static void writeRXCharacteristic(final byte[] cmd) {
+    public void writeRXCharacteristic(final byte[] cmd) {
 
         Log.i(TAG, Arrays.toString(cmd));
 
@@ -199,8 +204,10 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
                             @Override
                             public void onCharacteristicChanged(byte[] data) {
                                 Log.i(TAG, Arrays.toString(data));
-                                //final GlucoseReadingRx gtb = new GlucoseReadingRx(data, "Accu-check Adress");
-                                //Log.i(TAG, gtb.toString());
+                                final GlucoseReadingRx gtb = new GlucoseReadingRx(data, "Accu-check Adress");
+                                Log.i(TAG, gtb.toString());
+
+                                Log.i(TAG, "Glucose Record: " + JoH.dateTimeText((gtb.time - ct.timediff) + gtb.offsetMs()) );
 
                                 /*
 
@@ -300,7 +307,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
                 for (BluetoothGattCharacteristic characteristic : characteristics){
 
                     if (characteristic.getUuid().equals(UUID.fromString(DATE_TIME_CHARACTERISTIC))){
-                        CurrentTimeRx ct = new CurrentTimeRx(characteristic.getValue());
+                        ct = new CurrentTimeRx(characteristic.getValue());
                         Log.i(TAG, "Device time: " + ct.toNiceString());
                     }
 
