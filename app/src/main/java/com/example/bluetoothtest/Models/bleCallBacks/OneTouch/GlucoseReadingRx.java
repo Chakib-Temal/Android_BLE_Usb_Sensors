@@ -98,6 +98,10 @@ public class GlucoseReadingRx extends BluetoothCHelper {
                 + "  " + day + "-" + month + "-" + year + " timeoffset: " + offset + " timestamp: " + time + " from: " + device + (contextInfoFollows ? "  CONTEXT FOLLOWS" : "");
     }
 
+    public String toCustomString() {
+        return "Glucose data: mg/dl: " + mgdl + "  kg/l: " + kgl;
+    }
+
     public long offsetMs() {
         return (offset * 60000);
     }

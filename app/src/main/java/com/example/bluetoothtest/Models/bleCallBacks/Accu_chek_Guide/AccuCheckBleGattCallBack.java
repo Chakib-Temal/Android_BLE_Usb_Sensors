@@ -17,6 +17,7 @@ import com.example.bluetoothtest.Models.bleCallBacks.BleModelCallBack;
 import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.GlucoseReadingRx;
 import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.JoH;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -33,6 +34,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
     private CurrentTimeRx ct;
     private boolean timeAlreadyRead = false;
 
+    private static BluetoothGatt mBluetoothGatt;
 
 
     private static final String GLUCOSE_CHARACTERISTIC = ("00002a18-0000-1000-8000-00805f9b34fb");
@@ -43,7 +45,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
     ACCU_CHEK_GUIDE_OPERATION mOperation ;
 
-    boolean canAddNewMeasure = true;
+    private static List<String> measureList = new ArrayList<>();
 
     @Override
     public void onDisConnected(boolean isActiveDisConnected, BleDevice device, BluetoothGatt gatt, int status) {
@@ -55,7 +57,10 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
     @Override
     public void onConnectSuccess(BleDevice bleDevice, BluetoothGatt gatt, int status) {
         mDevice = bleDevice;
-        canAddNewMeasure = true;
+
+        mBluetoothGatt = gatt;
+
+        measureList = new ArrayList<>();
 
         MainActivity.writeTextSucces("OK Accu Chek Guide");
         mOperation = ACCU_CHEK_GUIDE_OPERATION.GET_MANUFATURE_NAME;
@@ -73,15 +78,15 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
             Log.i(TAG, Arrays.toString(data));
 
             switch (mOperation){
+
                 case GET_MANUFATURE_NAME:
+
                     readManufactureName();
                     mOperation = ACCU_CHEK_GUIDE_OPERATION.GET_TIME;
                     BleManager.getInstance().read(mDevice, GLUCOSE_SERVICE, DATE_TIME_CHARACTERISTIC, this);
                     break;
 
                 case GET_TIME:
-
-
 
                     timeAlreadyRead = true;
                     readTime();
@@ -119,8 +124,6 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
                 case NOTIFY_NEW_GLUCOSE_CONTEXT:
 
-
-
                     newGlucoseContextNotifyAlreadyActived = true;
                     mOperation = ACCU_CHEK_GUIDE_OPERATION.INDICATE;
 
@@ -140,7 +143,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
         @Override
         public void onCharacteristicChanged(byte[] data) {
-            Log.i(TAG, Arrays.toString(data));
+            //Log.i(TAG, Arrays.toString(data));
 
         }
     };
@@ -160,8 +163,6 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
             mOperation = ACCU_CHEK_GUIDE_OPERATION.GET_ALL_READING;
             writeRXCharacteristic(getAllRecords());
 
-            //BleManager.getInstance().notify(mDevice, GLUCOSE_SERVICE, RECORDS_CHARACTERISTIC, BleGetAllDataRequestBleCallBack);
-
         }
 
         @Override
@@ -171,7 +172,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
         @Override
         public void onCharacteristicChanged(byte[] data) {
-            Log.i(TAG, Arrays.toString(data));
+            //Log.i(TAG, Arrays.toString(data));
 
         }
     };
@@ -181,95 +182,60 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
         Log.i(TAG, Arrays.toString(cmd));
 
-        BleManager.getInstance().write(mDevice
-                , GLUCOSE_SERVICE
-                , RECORDS_CHARACTERISTIC
-                , cmd
-                , new BleWriteCallback() {
-                    @Override
-                    public void onWriteSuccess(int current, int total, byte[] justWrite) {
-                        Log.i(TAG, "onWriteSuccess");
+        BleManager.getInstance().notify(mDevice, GLUCOSE_SERVICE, GLUCOSE_CHARACTERISTIC, new BleNotifyCallback() {
+            @Override
+            public void onNotifySuccess() {
+                Log.i(TAG, "onNotifySuccess");
 
-                        BleManager.getInstance().notify(mDevice, GLUCOSE_SERVICE, GLUCOSE_CHARACTERISTIC, new BleNotifyCallback() {
+                BleManager.getInstance().write(mDevice
+                        , GLUCOSE_SERVICE
+                        , RECORDS_CHARACTERISTIC
+                        , cmd
+                        , new BleWriteCallback() {
                             @Override
-                            public void onNotifySuccess() {
-                                Log.i(TAG, "onNotifySuccess");
+                            public void onWriteSuccess(int current, int total, byte[] justWrite) {
+                                Log.i(TAG, "onWriteSuccess");
+
+
+
+
+
+
                             }
 
                             @Override
-                            public void onNotifyFailure(BleException exception) {
-
-                            }
-
-                            @Override
-                            public void onCharacteristicChanged(byte[] data) {
-                                Log.i(TAG, Arrays.toString(data));
-                                final GlucoseReadingRx gtb = new GlucoseReadingRx(data, "Accu-check Adress");
-                                Log.i(TAG, gtb.toString());
-
-                                Log.i(TAG, "Glucose Record: " + JoH.dateTimeText((gtb.time - ct.timediff) + gtb.offsetMs()) );
-
-                                /*
-
-0 = 11
-1 = 5
-2 = 0
-3 = -28
-4 = 7
-5 = 6
-6 = 8
-7 = 17
-8 = 49
-9 = 23
-10 = 116
-11 = 0
-12 = 101
-13 = -80
-14 = -8
-15 = 0
-16 = 0
-
-
-                                List<BluetoothGattService> services = BleManager.getInstance().getBluetoothGattServices(mDevice);
-                                for (BluetoothGattService service : services){
-
-                                    if (service.getUuid().equals(UUID.fromString(GLUCOSE_SERVICE))) {
-
-                                        List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
-
-                                        for (BluetoothGattCharacteristic characteristic : characteristics){
-
-                                            if (characteristic.getUuid().equals(UUID.fromString(RECORDS_CHARACTERISTIC))){
-                                                //Log.i(TAG, "manufacturer = " + characteristic.getStringValue(0));
-
-                                                final GlucoseReadingRx gtb = new GlucoseReadingRx(characteristic.getValue(), "Accu-check Adress");
-                                                Log.i(TAG, gtb.toString());
-
-                                            }
-                                        }
-
-                                    }
-
-                                }
-
-                                */
-
+                            public void onWriteFailure(BleException exception) {
+                                Log.i(TAG, "onWriteFailure" + exception.toString());
                             }
                         });
 
+            }
+
+            @Override
+            public void onNotifyFailure(BleException exception) {
+
+            }
+
+            @Override
+            public void onCharacteristicChanged(byte[] data) {
+                Log.i(TAG, Arrays.toString(data));
+                final GlucoseReadingRx gtb = new GlucoseReadingRx(data, "Accu-check Adress");
+                String measure = gtb.toCustomString() + "  " + JoH.dateTimeText(gtb.time + gtb.offsetMs());
+                Log.i(TAG, measure);
+
+                measureList.add(measure);
+                if (MainActivity.loadingDataListener != null)
+                    MainActivity.loadingDataListener.onLoadDataIsFinish(measureList);
+
+            }
+        });
 
 
 
-                    }
-
-                    @Override
-                    public void onWriteFailure(BleException exception) {
-                        Log.i(TAG, "onWriteFailure" + exception.toString());
-                    }
-                });
     }
 
     private void readManufactureName(){
+
 
         List<BluetoothGattService> services = BleManager.getInstance().getBluetoothGattServices(mDevice);
 
@@ -283,7 +249,6 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
                     if (characteristic.getUuid().equals(UUID.fromString(MANUFACTURER_NAME))){
                         Log.i(TAG, "manufacturer = " + characteristic.getStringValue(0));
-
                     }
 
                 }
@@ -334,8 +299,6 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
         NOTIFY_NEW_GLUCOSE_CONTEXT,
         INDICATE,
         GET_ALL_READING;
-
-
     }
 
 }
