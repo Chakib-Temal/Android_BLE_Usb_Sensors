@@ -12,6 +12,7 @@ import com.example.bluetoothtest.MainActivity;
 import com.example.bluetoothtest.Models.Usb.devices.AccuChek_Guide;
 import com.example.bluetoothtest.Models.Usb.devices.Devices;
 
+
 public class UsbBroadCast extends BroadcastReceiver {
 
     private static final String TAG = UsbBroadCast.class.getSimpleName();
@@ -49,14 +50,6 @@ public class UsbBroadCast extends BroadcastReceiver {
                 UsbDevice usbDevice = (UsbDevice) intent.getParcelableExtra(UsbManager.EXTRA_DEVICE);
 
                 try {
-                    AccuChek_Guide usbSensor = (AccuChek_Guide) getInitialInformationOfSensor(usbDevice);
-
-                    usbSensor.writeInitial(5000);
-                    usbSensor.readInitial( new byte[128], 5000);
-                    //usbSensor.read( new byte[54], 5000);
-
-                    usbSensor.getBuildAssociation();
-                    usbSensor.read( new byte[1024], 5000);
 
 
                     MainActivity.writeTextSucces("Succes");
@@ -76,6 +69,15 @@ public class UsbBroadCast extends BroadcastReceiver {
 
         if (usbDevice.getVendorId() == Devices.ACCU_CHEK_GUIDE_VENDOR_ID &&
                 usbDevice.getProductId() == Devices.ACCU_CHEK_GUIDE_PRODUCT_ID ) {
+
+            usbInfo.setVendorId(Devices.ACCU_CHEK_GUIDE_VENDOR_ID);
+            usbInfo.setProductId(Devices.ACCU_CHEK_GUIDE_PRODUCT_ID);
+
+            return new AccuChek_Guide(usbInfo, usbDevice);
+        }
+
+        else if (usbDevice.getVendorId() == Devices.MY_STAR_DOSECOACH_VENDOR_ID &&
+                usbDevice.getProductId() == Devices.MY_STAR_DOSECOACH_PRODUCT_ID ) {
 
             usbInfo.setVendorId(Devices.ACCU_CHEK_GUIDE_VENDOR_ID);
             usbInfo.setProductId(Devices.ACCU_CHEK_GUIDE_PRODUCT_ID);

@@ -1,4 +1,4 @@
-package com.example.bluetoothtest.Models.bleCallBacks.Accu_chek_Guide;
+package com.example.bluetoothtest.Models.bleCallBacks.MyStar;
 
 import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -13,6 +13,7 @@ import com.clj.fastble.callback.BleWriteCallback;
 import com.clj.fastble.data.BleDevice;
 import com.clj.fastble.exception.BleException;
 import com.example.bluetoothtest.MainActivity;
+import com.example.bluetoothtest.Models.bleCallBacks.Accu_chek_Guide.CurrentTimeRx;
 import com.example.bluetoothtest.Models.bleCallBacks.BleModelCallBack;
 import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.GlucoseReadingRx;
 import com.example.bluetoothtest.Models.bleCallBacks.OneTouch.JoH;
@@ -22,15 +23,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
-public class AccuCheckBleGattCallBack extends BleModelCallBack {
+public class MyStarPlusBleGattCallBack extends BleModelCallBack {
 
-    public final static String TAG = AccuCheckBleGattCallBack.class.getSimpleName();
+    public final static String TAG = MyStarPlusBleGattCallBack.class.getSimpleName();
 
     private static final String DEVICE_INFO_SERVICE = "0000180a-0000-1000-8000-00805f9b34fb";
     private static final String MANUFACTURER_NAME = "00002a29-0000-1000-8000-00805f9b34fb";
 
     private static final String GLUCOSE_SERVICE = ("00001808-0000-1000-8000-00805f9b34fb");
-    private static final String DATE_TIME_CHARACTERISTIC = ("00002a08-0000-1000-8000-00805f9b34fb");
+
+    private static final String CURRENT_TIME_SERVICE = ("00001805-0000-1000-8000-00805f9b34fb");
+    private static final String DATE_TIME_CHARACTERISTIC = ("00002a2b-0000-1000-8000-00805f9b34fb");
     private CurrentTimeRx ct;
     private boolean timeAlreadyRead = false;
 
@@ -42,6 +45,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
     private boolean newGlucoseContextNotifyAlreadyActived = false;
 
     private static final String RECORDS_CHARACTERISTIC = ("00002a52-0000-1000-8000-00805f9b34fb");
+    private static final String RECORDS_CHARACTERISTIC__ = ("00002902-0000-1000-8000-00805f9b34fb");
 
     ACCU_CHEK_GUIDE_OPERATION mOperation ;
 
@@ -50,7 +54,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
     @Override
     public void onDisConnected(boolean isActiveDisConnected, BleDevice device, BluetoothGatt gatt, int status) {
         super.onDisConnected(isActiveDisConnected, device, gatt, status);
-        MainActivity.writeTextSucces("Fin de connexion l'accu check guideo");
+        MainActivity.writeTextSucces("Fin de connexion l'accu check");
 
     }
 
@@ -83,7 +87,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
                     readManufactureName();
                     mOperation = ACCU_CHEK_GUIDE_OPERATION.GET_TIME;
-                    BleManager.getInstance().read(mDevice, GLUCOSE_SERVICE, DATE_TIME_CHARACTERISTIC, this);
+                    BleManager.getInstance().read(mDevice, CURRENT_TIME_SERVICE, DATE_TIME_CHARACTERISTIC, this);
                     break;
 
                 case GET_TIME:
@@ -118,17 +122,12 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
                 case NOTIFY_NEW_GLUCOSE_VALUE:
 
-                    mOperation = ACCU_CHEK_GUIDE_OPERATION.NOTIFY_NEW_GLUCOSE_CONTEXT;
-                    BleManager.getInstance().notify(mDevice, GLUCOSE_SERVICE, CONTEXT_CHARACTERISTIC, bleNotifyCallback);
-                    break;
-
-                case NOTIFY_NEW_GLUCOSE_CONTEXT:
-
                     newGlucoseContextNotifyAlreadyActived = true;
                     mOperation = ACCU_CHEK_GUIDE_OPERATION.INDICATE;
 
                     BleManager.getInstance().indicate(mDevice, GLUCOSE_SERVICE, RECORDS_CHARACTERISTIC, bleIndicateCallback);
 
+                    //BleManager.getInstance().notify(mDevice, GLUCOSE_SERVICE, CONTEXT_CHARACTERISTIC, bleNotifyCallback);
                     break;
 
                 default :
@@ -161,7 +160,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
             passed = true;
             Log.i(TAG, "onIndicateSuccess" + mOperation);
             mOperation = ACCU_CHEK_GUIDE_OPERATION.GET_ALL_READING;
-            writeRXCharacteristic(getAllRecords());
+            writeRXCharacteristic(getAllRecordsZ());
 
         }
 
@@ -265,7 +264,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
         for (BluetoothGattService service : services){
 
-            if (service.getUuid().equals(UUID.fromString(GLUCOSE_SERVICE))) {
+            if (service.getUuid().equals(UUID.fromString(CURRENT_TIME_SERVICE))) {
 
                 List<BluetoothGattCharacteristic> characteristics = service.getCharacteristics();
 
@@ -290,13 +289,20 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
     public static byte[] getAllRecords() {
         return new byte[]{OPCODE_REPORT_RECORDS, ALL_RECORDS};
     }
+    private static final byte FIRST_RECORD = 0x05; // first/last order needs verifying on device
 
+    public static byte[] getFirstRecord() {
+        return new byte[]{OPCODE_REPORT_RECORDS, FIRST_RECORD};
+    }
+
+    public static byte[] getAllRecordsZ() {
+        return new byte[]{OPCODE_REPORT_RECORDS};
+    }
 
     public enum ACCU_CHEK_GUIDE_OPERATION{
         GET_MANUFATURE_NAME,
         GET_TIME,
         NOTIFY_NEW_GLUCOSE_VALUE,
-        NOTIFY_NEW_GLUCOSE_CONTEXT,
         INDICATE,
         GET_ALL_READING;
     }
