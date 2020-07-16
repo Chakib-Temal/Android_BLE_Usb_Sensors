@@ -69,7 +69,7 @@ public class ShowTextDialogFragment extends DialogFragment {
 	}
 	
 	/**
-	 * @param lsDeviceInfo2
+	 * @param device
 	 */
 	private void showScanResults(LsDeviceInfo device)
 	{

@@ -1,7 +1,9 @@
 package com.example.bluetoothtest.Models.LsBleSdk;
 
 import android.util.Log;
+import android.widget.Toast;
 
+import com.example.bluetoothtest.App;
 import com.lifesense.ble.LsBleManager;
 import com.lifesense.ble.PairCallback;
 import com.lifesense.ble.bean.LsDeviceInfo;
@@ -15,7 +17,12 @@ import java.util.List;
 public class LsBlePairCallBack extends PairCallback {
 
     public static final String TAG = LsBlePairCallBack.class.getSimpleName();
+    private LsDeviceInfo lsDevice;
 
+    public LsBlePairCallBack(LsDeviceInfo lsDevice){
+        super();
+        this.lsDevice = lsDevice;
+    }
 
     @Override
     public void onPairResults(final LsDeviceInfo lsDevice,final int status)
@@ -24,11 +31,13 @@ public class LsBlePairCallBack extends PairCallback {
         if(lsDevice!=null && status==0)
         {
             // Succes
-            Log.i(TAG, "Paired with succes");
+            Log.i(TAG, "Paired succes");
+            LsBleScanCallBack.saveDeviceInfo(lsDevice);
+
         }
         else {
             //showPromptDialog("Prompt", "Pairing failed, please try again");
-            Log.i(TAG, "Paired with failed");
+            Log.i(TAG, "Paired failed");
 
         }
     }
@@ -74,12 +83,14 @@ public class LsBlePairCallBack extends PairCallback {
 
         if(userList==null || userList.size()==0)
         {
-            //Toast.makeText(getActivity(), "failed to pairing devie,user list is null...", Toast.LENGTH_LONG).show();
-            Log.i(TAG, "onDiscoverUserInfo");
+            Toast.makeText(App.getContext(), "failed to pairing devie,user list is null...", Toast.LENGTH_LONG).show();
+            Log.i(TAG, "onDiscoverUserInfo, wtf ? failed to pairing devie,user list is null...");
             return ;
         }
-        //mDeviceUserList=userList;
+
         //showDeviceUserInfo(userList);
+        String userName = "chakib";
+        LsBleManager.getInstance().bindDeviceUser(lsDevice.getMacAddress(),1, userName.trim());
 
 
 

@@ -1,8 +1,12 @@
 package com.example.bluetoothtest.Models.LsBleSdk;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.util.Log;
 
+import com.example.bluetoothtest.App;
 import com.example.bluetoothtest.MainActivity;
+import com.example.bluetoothtest.Models.LsBleSdk.database.AsyncTaskRunner;
 import com.example.bluetoothtest.Models.LsBleSdk.view.OnDialogClickListener;
 import com.example.bluetoothtest.Models.LsBleSdk.view.ShowTextDialogFragment;
 import com.lifesense.ble.LsBleManager;
@@ -23,6 +27,10 @@ public class LsBleScanCallBack extends SearchCallback {
     public void onSearchResults(LsDeviceInfo lsDevice)
     {
 
+        if (lsDevice.getDeviceName().equals("MAMBO")){
+            return;
+        }
+
         Log.i(TAG, lsDevice.toString());
 
         if(lsDevice.getPairStatus()==1
@@ -30,37 +38,128 @@ public class LsBleScanCallBack extends SearchCallback {
                 &&  lsDevice.getRegisterStatus() ==0 ))
         {
 
-            Log.i(LsBlePairCallBack.TAG, "MAMBI IS HERE ...");
-            LsBleManager.getInstance().stopSearch();
-            setProductUserInfoOnPairingMode(lsDevice);
+            String mac = lsDevice.getMacAddress();
+            SharedPreferences prefs = App.getContext().getSharedPreferences(
+                    App.getContext().getPackageName(), Context.MODE_PRIVATE);
 
-            //S9 互联秤，在绑定过程中添加用户信息
-            WeightUserInfo userInfo = new WeightUserInfo();
-            userInfo.setProductUserNumber(2);
-            userInfo.setAge(30);
-            userInfo.setHeight((float) 1.70);
-            userInfo.setWeight(40);
-            userInfo.setSex(SexType.MALE);
-            userInfo.setAthlete(true);
-            userInfo.setAthleteActivityLevel(3);
-            //currentPairingDevice.setUserInfo(userInfo);
-            //直接配对设备
-            Log.i(LsBlePairCallBack.TAG, "Trying to Pair ...");
+            int statePairing = prefs.getInt(mac, 0);
 
-            LsBleManager.getInstance().pairingWithDevice(lsDevice, new LsBlePairCallBack());
+            if (statePairing == 0) {
+                prefs.edit().putInt(mac, 1).apply();
+
+                LsBleManager.getInstance().stopSearch();
+                setProductUserInfoOnPairingMode(lsDevice);
+
+                //S9 互联秤，在绑定过程中添加用户信息
+                WeightUserInfo userInfo = new WeightUserInfo();
+                userInfo.setProductUserNumber(2);
+                userInfo.setAge(30);
+                userInfo.setHeight((float) 1.70);
+                userInfo.setWeight(40);
+                userInfo.setSex(SexType.MALE);
+                userInfo.setAthlete(true);
+                userInfo.setAthleteActivityLevel(3);
+                //currentPairingDevice.setUserInfo(userInfo);
+                //直接配对设备
+                Log.i(LsBlePairCallBack.TAG, "Trying to Pair ...");
+
+                LsBleManager.getInstance().pairingWithDevice(lsDevice, new LsBlePairCallBack(lsDevice));
+
+            }else if (statePairing == 100) {
+                try {
+                    LsBleManager.getInstance().stopSearch();
+
+                }catch (Exception e){
+                    throw new Error("Can't stop search ");
+                }
+
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+                MainActivity.LsopenPairedDeviceFragment();
+
+
+                //saveDeviceInfo(lsDevice);
+                // demarrer le Paired device fragment
+            }
 
         }
 
-        else if (lsDevice.getDeviceName().equals("MAMBO")) {
+        else if (!lsDevice.getDeviceName().equals("Scale Paired")) {
+
+            // check user number
+
+            Log.i(LsBlePairCallBack.TAG, "Scale paired IS HERE ...");
+            try {
+                LsBleManager.getInstance().stopSearch();
+
+            }catch (Exception e){
+                throw new Error("Can't stop search ");
+            }
+
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+
+            //MainActivity.LsopenPairedDeviceFragment();
+
+            //lsDevice.setDeviceId(lsDevice.getMacAddress().replace(":", ""));
+            savePairedDeviceInfo(lsDevice);
+
+        }
+
+        /*
+        else if (!lsDevice.getDeviceName().equals("MAMBO")) {
+
+            String mac = lsDevice.getMacAddress();
+            SharedPreferences prefs = App.getContext().getSharedPreferences(
+                    App.getContext().getPackageName(), Context.MODE_PRIVATE);
+
+            prefs.edit().putInt(mac, 100).apply();
+
+            Log.i(LsBlePairCallBack.TAG, "MAMBO IS HERE ...");
             LsBleManager.getInstance().stopSearch();
             lsDevice.setDeviceId(lsDevice.getMacAddress().replace(":", ""));
             saveDeviceInfo(lsDevice);
 
         }
+        */
+
 
     }
 
-    private void saveDeviceInfo(final LsDeviceInfo lsDevice){
+    public static void savePairedDeviceInfo(final LsDeviceInfo lsDevice){
+
+        lsDevice.setDeviceUserNumber(1);
+
+        ShowTextDialogFragment showInfoDialog=new ShowTextDialogFragment(lsDevice,new OnDialogClickListener()
+        {
+            @Override
+            public void onDialogCancel()
+            {
+                MainActivity.LsopenDeviceFragment(lsDevice);
+            }
+        });
+
+        try{
+
+            showInfoDialog.show(MainActivity.mFragmentManager, "show info");
+
+        } catch (ClassCastException e) {
+            Log.d(TAG, "Can't get the fragment manager with this");
+        }
+
+    }
+
+    public static void saveDeviceInfo(final LsDeviceInfo lsDevice){
+
+        AsyncTaskRunner runner = new AsyncTaskRunner(App.getContext(),lsDevice);
+        runner.execute();
 
         ShowTextDialogFragment showInfoDialog=new ShowTextDialogFragment(lsDevice,new OnDialogClickListener()
         {
@@ -86,7 +185,7 @@ public class LsBleScanCallBack extends SearchCallback {
 
     /**
      * set product user info on pairing mode
-     * @param device
+     * @param lsDevice
      */
     private void setProductUserInfoOnPairingMode(LsDeviceInfo lsDevice)
     {

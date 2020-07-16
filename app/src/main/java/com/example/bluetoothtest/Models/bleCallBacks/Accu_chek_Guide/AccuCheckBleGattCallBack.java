@@ -143,7 +143,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
         @Override
         public void onCharacteristicChanged(byte[] data) {
-            //Log.i(TAG, Arrays.toString(data));
+            Log.i(TAG + "***************** " , Arrays.toString(data));
 
         }
     };
@@ -172,7 +172,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
         @Override
         public void onCharacteristicChanged(byte[] data) {
-            //Log.i(TAG, Arrays.toString(data));
+            Log.i(TAG + "################", Arrays.toString(data));
 
         }
     };
@@ -194,11 +194,7 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
                         , new BleWriteCallback() {
                             @Override
                             public void onWriteSuccess(int current, int total, byte[] justWrite) {
-                                Log.i(TAG, "onWriteSuccess");
-
-
-
-
+                                Log.i(TAG, "onWriteSuccess " + total + "   " + current + " " + Arrays.toString(justWrite) );
 
 
                             }

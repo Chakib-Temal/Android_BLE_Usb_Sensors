@@ -9,6 +9,7 @@ import android.content.DialogInterface;
 import android.content.DialogInterface.OnDismissListener;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -29,6 +30,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.example.bluetoothtest.App;
 import com.example.bluetoothtest.R;
 import com.lifesense.android.api.callback.AuthorizationCallback;
 import com.lifesense.android.api.enums.AuthorizationResult;
@@ -54,6 +56,8 @@ import com.lifesense.ble.bean.constant.DeviceUpgradeStatus;
 import com.lifesense.ble.bean.constant.ManagerStatus;
 import com.lifesense.ble.bean.constant.PacketProfile;
 import com.lifesense.ble.bean.constant.ProtocolType;
+import com.lifesense.ble.bean.constant.SexType;
+import com.lifesense.ble.bean.constant.UnitType;
 
 import java.io.File;
 import java.util.List;
@@ -61,7 +65,7 @@ import java.util.List;
 public class DeviceFragment extends Fragment {
 
 	private static final String TAG="LS-BLE";
-	
+
 	private View rootView;
 	private TextView deviceNameView,stateTextView,logTextView,batteryTextView,newDataTextView;
 	private LsDeviceInfo currentDevice;
@@ -77,7 +81,7 @@ public class DeviceFragment extends Fragment {
 	private boolean hasSportNotify;
 	private SportNotify mSportsNotify;
 	private boolean isRealtimeDataShowing;
-	
+
 	/**
 	 * 自定义广播接收者
 	 * @author sky
@@ -97,11 +101,11 @@ public class DeviceFragment extends Fragment {
 			}
 			String msg=intent.getStringExtra("errorMsg");
 			logMessage("broadcast resutls >>"+msg);
-			showDeviceMeasuringData(msg);			
+			showDeviceMeasuringData(msg);
 		}
-		
+
 	}
-	
+
 
 
 	/**
@@ -110,7 +114,7 @@ public class DeviceFragment extends Fragment {
 	private OnSettingListener mSettingListener=new OnSettingListener()
 	{
 		@Override
-		public void onFailure(int errorCode) 
+		public void onFailure(int errorCode)
 		{
 			String msg=getResources().getString(R.string.setting_fail);
 			DialogUtils.showToastMessage(getActivity(),msg+",errorCode="+errorCode);
@@ -122,7 +126,7 @@ public class DeviceFragment extends Fragment {
 			DialogUtils.showToastMessage(getActivity(),msg);
 		}
 	};
-	
+
 	/**
 	 * Sport Notify Confirm Listener
 	 */
@@ -136,7 +140,7 @@ public class DeviceFragment extends Fragment {
 				public void run() {
 					mSportsNotify=null;
 					String msg=getResources().getString(R.string.setting_ok);
-					DialogUtils.showToastMessage(getActivity(),msg);					
+					DialogUtils.showToastMessage(getActivity(),msg);
 				}
 			});
 
@@ -149,13 +153,13 @@ public class DeviceFragment extends Fragment {
 				public void run() {
 					mSportsNotify=null;
 					String msg=getResources().getString(R.string.setting_fail);
-					DialogUtils.showToastMessage(getActivity(),msg+",errorCode="+errorCode);					
+					DialogUtils.showToastMessage(getActivity(),msg+",errorCode="+errorCode);
 				}
 			});
-		
+
 		}
 	};
-	
+
 	/**
 	 * 设备固件升级进度的回调对象
 	 */
@@ -209,8 +213,8 @@ public class DeviceFragment extends Fragment {
 			showUpgradeMessage(msg);
 
 		}
-	};	
-	
+	};
+
 	/**
 	 * Device measurement data synchronization callback object
 	 */
@@ -218,7 +222,7 @@ public class DeviceFragment extends Fragment {
 	{
 		@Override
 		public void onDeviceConnectStateChange(DeviceConnectState connectState,
-                                               String broadcastId)
+											   String broadcastId)
 		{
 			//Device Connection Status
 			updateDeviceConnectState(connectState);
@@ -258,7 +262,7 @@ public class DeviceFragment extends Fragment {
 
 		@Override
 		public void onReceivePedometerMeasureData(Object dataObject,
-                                                  PacketProfile packetType, String sourceData)
+												  PacketProfile packetType, String sourceData)
 		{
 			int devicePower=DeviceDataUtils.getDevicePowerPercent(dataObject, packetType);
 			updateDevicePower(devicePower);
@@ -351,7 +355,7 @@ public class DeviceFragment extends Fragment {
 		{
 			showDeviceMeasuringData(sportNotify);
 			if(mSportsNotify!=null &&
-					mSportsNotify.getRequestType() == sportNotify.getRequestType() 
+					mSportsNotify.getRequestType() == sportNotify.getRequestType()
 					&& mSportsNotify.getSportsType() == sportNotify.getSportsType()){
 				Log.e("LS-BLE", "the same sport notify:"+sportNotify.toString()+"; local >> "+mSportsNotify.toString());
 				return ;
@@ -372,13 +376,13 @@ public class DeviceFragment extends Fragment {
 			updateNewDatMessage();
 			showDeviceMeasuringData(bgData);
 		}
-		
-		
+
+
 	};
-	
+
 	@Override
 	public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState)
+							 Bundle savedInstanceState)
 	{
 		rootView=inflater.inflate(R.layout.activity_device, container, false);
 		deviceNameView=(TextView)rootView.findViewById(R.id.device_name_tv);
@@ -395,7 +399,7 @@ public class DeviceFragment extends Fragment {
 		batteryTextView.setText("");
 		connectingProgressBar.setVisibility(View.GONE);
 		setHasOptionsMenu(true);
-		
+
 		//注册设置回调广播
 		mSettingReceiver=new DeviceSettingReceiver();
 		IntentFilter filter=new IntentFilter();
@@ -443,12 +447,12 @@ public class DeviceFragment extends Fragment {
 	}
 
 	@Override
-	public void onStart() 
+	public void onStart()
 	{
 		logMessage("onStart");
 		super.onStart();
 		Bundle args = getArguments();
-		if (args!=null && args.containsKey("DeviceInfo")) 
+		if (args!=null && args.containsKey("DeviceInfo"))
 		{
 			currentDevice = args.getParcelable("DeviceInfo");
 			//update test device info
@@ -474,7 +478,7 @@ public class DeviceFragment extends Fragment {
 
 
 	@Override
-	public void onStop() 
+	public void onStop()
 	{
 		logMessage("onStop");
 		super.onStop();
@@ -497,7 +501,7 @@ public class DeviceFragment extends Fragment {
 
 
 	@Override
-	public void onDestroy() 
+	public void onDestroy()
 	{
 		logMessage("onDestroy");
 		super.onDestroy();
@@ -516,7 +520,7 @@ public class DeviceFragment extends Fragment {
 		else if(DeviceSettiingProfiles.isNewProtocolDevice(currentDevice)){
 			inflater.inflate(R.menu.pedometer_functions, menu);
 		}
-		else if(currentDevice!=null && 
+		else if(currentDevice!=null &&
 				ProtocolType.A6.toString().equalsIgnoreCase(currentDevice.getProtocolType()))
 		{
 			inflater.inflate(R.menu.scale_functions, menu);
@@ -531,7 +535,7 @@ public class DeviceFragment extends Fragment {
 			inflater.inflate(R.menu.common_functions, menu);
 		}
 	}
-	
+
 
 	@Override
 	public boolean onOptionsItemSelected(MenuItem item)
@@ -543,7 +547,7 @@ public class DeviceFragment extends Fragment {
 	/**
 	 * ************************************************
 	 */
-	
+
 	/**
 	 * 连接设备
 	 */
@@ -577,31 +581,112 @@ public class DeviceFragment extends Fragment {
 		LsBleManager.getInstance().setMeasureDevice(null);
 		//add target measurement device
 
-		LsBleManager.getInstance().addMeasureDevice(currentDevice, new AuthorizationCallback() {
-			@Override
-			public void callback(AuthorizationResult authorizationResult) {
-				if(authorizationResult!=null && authorizationResult.getCode() == AuthorizationResult.SUCCESS.getCode()){
-					Log.e("LS-BLE","resp of auth >>"+authorizationResult.toString());
-					//set product user info on data syncing mode
-					DeviceSettiingProfiles.setProductUserInfoOnSyncingMode(currentDevice);
-					//start data syncing service
-					LsBleManager.getInstance().startDataReceiveService(mDataCallback);
+		final String mac = currentDevice.getMacAddress();
+		final SharedPreferences prefs = App.getContext().getSharedPreferences(
+				App.getContext().getPackageName(), Context.MODE_PRIVATE);
+
+		int statePairing = prefs.getInt(mac, 0);
+
+		if (statePairing == 0) {
+			// stop all operation
+		}else if (statePairing == 1){
+
+
+			LsBleManager.getInstance().addMeasureDevice(currentDevice, new AuthorizationCallback() {
+				@Override
+				public void callback(AuthorizationResult authorizationResult) {
+					if(authorizationResult!=null && authorizationResult.getCode() == AuthorizationResult.SUCCESS.getCode()){
+						Log.e("LS-BLE","resp of auth >>"+authorizationResult.toString());
+						//set product user info on data syncing mode
+						DeviceSettiingProfiles.setProductUserInfoOnSyncingMode(currentDevice);
+						//start data syncing service
+						LsBleManager.getInstance().startDataReceiveService(mDataCallback);
+
+						prefs.edit().putInt(mac, 100).apply();
+					}
+					else{
+						Log.e("LS-BLE","resp of auth >>"+authorizationResult.toString());
+						//认证失败
+						DialogUtils.showPromptDialog(getActivity(),"Prompt", "Device Authentication Failure!"+currentDevice.getDeviceName()+"["+currentDevice.getMacAddress()+"]");
+						updateDeviceConnectState(DeviceConnectState.UNKNOWN);
+					}
 				}
-				else{
-					Log.e("LS-BLE","resp of auth >>"+authorizationResult.toString());
-					//认证失败
-					DialogUtils.showPromptDialog(getActivity(),"Prompt", "Device Authentication Failure!"+currentDevice.getDeviceName()+"["+currentDevice.getMacAddress()+"]");
-					updateDeviceConnectState(DeviceConnectState.UNKNOWN);
-				}
+			});
+
+		}else if (statePairing == 100){
+
+			boolean isSuccess=setMeasureDevice();
+
+			if(isSuccess)
+			{
+				setMeasureDevice();
+
+				LsBleManager.getInstance().startDataReceiveService(mDataCallback);
+				Toast.makeText(getActivity(), "start auto syncing measurement data", Toast.LENGTH_SHORT).show();
 			}
-		});
+
+		}
 
 
 		//update connect state
 		updateDeviceConnectState(DeviceConnectState.CONNECTING);
 	}
-	
-	
+
+
+
+	/**
+	 * set measurement device
+	 */
+	protected boolean setMeasureDevice()
+	{
+		//clear old device
+		LsBleManager.getInstance().setMeasureDevice(null);
+
+		System.err.println("add measure device:"+currentDevice.toString());
+		LsBleManager.getInstance().addMeasureDevice(currentDevice);
+		//set product user info on data syncing mode
+		setProductUserInfoOnSyncingMode(currentDevice);
+
+		return true;
+	}
+
+	/**
+	 * set product user info on data syncing mode
+	 * @param lsDevice
+	 */
+	private void setProductUserInfoOnSyncingMode(LsDeviceInfo lsDevice)
+	{
+		if(lsDevice==null)
+		{
+			return ;
+		}
+		/**
+		 * in some old products, such as A2, A3,
+		 * you can change the device's settings info before syncing
+		 */
+		if(DeviceTypeConstants.FAT_SCALE.equalsIgnoreCase(lsDevice.getDeviceType())
+				||DeviceTypeConstants.WEIGHT_SCALE.equalsIgnoreCase(lsDevice.getDeviceType()))
+		{
+			/**
+			 * optional step,set product user info in syncing mode
+			 */
+			WeightUserInfo weightUserInfo=new WeightUserInfo();
+			weightUserInfo.setAge(30);					//user age
+			weightUserInfo.setHeight((float) 1.88); 	//unit of measurement is m
+			weightUserInfo.setGoalWeight(78);			//unit of measurement is kg
+			weightUserInfo.setUnit(UnitType.UNIT_KG);	//measurement unit
+			weightUserInfo.setSex(SexType.FEMALE);		//user gender
+			weightUserInfo.setAthlete(true);			//it is an athlete
+			weightUserInfo.setAthleteActivityLevel(3);	//athlete level
+
+			weightUserInfo.setProductUserNumber(lsDevice.getDeviceUserNumber());
+			weightUserInfo.setMacAddress(lsDevice.getMacAddress());
+			weightUserInfo.setDeviceId(lsDevice.getDeviceId()); //set target device's id
+
+			//calling interface
+			LsBleManager.getInstance().setProductUserInfo(weightUserInfo);
+		}
+	}
 
 	/**
 	 * 展示设备详细信息
@@ -618,19 +703,19 @@ public class DeviceFragment extends Fragment {
 				logTextView.append("------------------------------------"+"\r\n");
 				logTextView.append("deviceName: "+device.getDeviceName()+"\n");
 				logTextView.append("broadcastID: "+device.getBroadcastID()+"\n");
-				logTextView.append("deviceType: "+device.getDeviceType()+"\n"); 
-				logTextView.append("password: "+device.getPassword()+"\n"); 
+				logTextView.append("deviceType: "+device.getDeviceType()+"\n");
+				logTextView.append("password: "+device.getPassword()+"\n");
 				logTextView.append("deviceID: "+device.getDeviceId()+"\n");
 				logTextView.append("deviceSN: "+device.getDeviceSn()+"\n");
-				logTextView.append("modelNumber: "+device.getModelNumber()+"\n");  	      	  
+				logTextView.append("modelNumber: "+device.getModelNumber()+"\n");
 				logTextView.append("firmwareVersion: "+device.getFirmwareVersion()+"\n");
-				logTextView.append("hardwareVersion: "+device.getHardwareVersion()+"\n");   
+				logTextView.append("hardwareVersion: "+device.getHardwareVersion()+"\n");
 				logTextView.append("softwareVersion: "+device.getSoftwareVersion()+"\n");
 				logTextView.append("UserNumber: "+device.getDeviceUserNumber()+"\n");
-				logTextView.append("protocolType: "+device.getProtocolType()+"\n");				
+				logTextView.append("protocolType: "+device.getProtocolType()+"\n");
 			}
 		});
-		
+
 	}
 
 	/**
@@ -643,13 +728,13 @@ public class DeviceFragment extends Fragment {
 			return ;
 		}
 		mainHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				logTextView.append("\r\n");
 				logTextView.append(Html.fromHtml("<font color='red'>"+"-----------------------"+"</font>"));
 				logTextView.append("\r\n");
-				logTextView.append(DeviceDataUtils.formatStringValue(obj.toString()));	
+				logTextView.append(DeviceDataUtils.formatStringValue(obj.toString()));
 				logTextView.append("\r\n");
 			}
 		});
@@ -675,12 +760,12 @@ public class DeviceFragment extends Fragment {
 			}
 		});
 	}
-	
+
 	/**
 	 * 更新设备电量显示
 	 * @param percentage
 	 */
-	private void updateDevicePower(final int percentage) 
+	private void updateDevicePower(final int percentage)
 	{
 		if(getActivity() ==null){
 			return ;
@@ -700,7 +785,7 @@ public class DeviceFragment extends Fragment {
 			}
 		});
 	}
-	
+
 	/**
 	 * 更新设备的连接状态信息
 	 * @param connectState
@@ -759,7 +844,7 @@ public class DeviceFragment extends Fragment {
 		msg=DeviceFragment.class.getSimpleName()+" >> "+msg;
 		Log.e(TAG, msg);
 	}
-	
+
 	/**
 	 * 显示升级提示对话框
 	 * @param title
@@ -775,18 +860,18 @@ public class DeviceFragment extends Fragment {
 			@Override
 			public void onDismiss(DialogInterface dialog)
 			{
-				
+
 			}
 		});
 	}
-	
+
 	/**
 	 * 显示升级提示信息
 	 * @param msg
 	 */
 	private void showUpgradeMessage(final String msg){
 		mainHandler.post(new Runnable() {
-			
+
 			@Override
 			public void run() {
 				if(upgradingDialog!=null && upgradingDialog.isShowing()){
@@ -795,7 +880,7 @@ public class DeviceFragment extends Fragment {
 			}
 		});
 	}
-	
+
 	/**
 	 * 取消升级提示Dialog
 	 */
@@ -811,14 +896,14 @@ public class DeviceFragment extends Fragment {
 	 * 处理设备功能
 	 * @param index
 	 */
-	private void handleDeviceFunction(int index) 
+	private void handleDeviceFunction(int index)
 	{
 		String deviceMac=currentDevice.getMacAddress();
 		if(TextUtils.isEmpty(deviceMac)){
 			Toast.makeText(getActivity(), "undefined.....", Toast.LENGTH_LONG).show();
 			return ;
 		}
-		switch (index) 
+		switch (index)
 		{
 			case R.id.fun_device_info:{
 				//设备信息
@@ -961,7 +1046,7 @@ public class DeviceFragment extends Fragment {
 					public void onBindingResults() {
 						cancelUpgradingDialog();
 					}
-					
+
 				});
 			}break;
 			case R.id.fun_health_score:{
@@ -1036,9 +1121,159 @@ public class DeviceFragment extends Fragment {
 				else{
 					mSettingListener.onFailure(-1);
 				}
-				
+
 			}break;
 
 		}
 	}
+
+
+
+
+	/**
+	 * Device measurement data synchronization callback object
+	 */
+	private ReceiveDataCallback mContinueDataCallback=new ReceiveDataCallback()
+	{
+		@Override
+		public void onDeviceConnectStateChange(DeviceConnectState connectState,
+											   String broadcastId)
+		{
+			//Device Connection Status
+			updateDeviceConnectState(broadcastId,connectState);
+		}
+
+		@Override
+		public void onReceiveWeightData_A3(WeightData_A3 wData)
+		{
+			/**
+			 * Weight Scale Measurement Data
+			 * A3 product
+			 */
+			LsBleManager.getInstance().setLogMessage("object data >> "+wData.toString());
+			updateNewDatMessage();
+			//for test
+			if(wData.getImpedance() >0){
+				DeviceSettiingProfiles.calculateBodyCompositionData(wData.getImpedance());
+			}
+			if(currentDevice.getProtocolType().equalsIgnoreCase(ProtocolType.A6.toString())){
+				//show realtime data if support
+				shwoRealtimeData(wData);
+			}
+			else{
+				/**
+				 * Weight Scale Measurement Data
+				 * A3 product
+				 */
+				showDeviceMeasuringData(wData);
+			}		}
+
+		@Override
+		public void onReceiveUserInfo(WeightUserInfo proUserInfo)
+		{
+			/**
+			 * Weight Scale Product User Info
+			 * A3 product
+			 */
+			showDeviceMeasuringData(proUserInfo);
+		}
+		@Override
+		public void onReceiveWeightDta_A2(WeightData_A2 wData)
+		{
+			// TODO Auto-generated method stub
+			updateNewDatMessage();
+			/**
+			 * Weight Scale Measurement Data
+			 * A2 product
+			 */
+			showDeviceMeasuringData(wData);
+		}
+
+		@Override
+		public void onReceiveBloodPressureData(BloodPressureData bpData)
+		{
+			updateNewDatMessage();
+			/**
+			 * Blood Pressure Measurement Data
+			 * A2/A3 product
+			 */
+			showDeviceMeasuringData(bpData);		}
+
+		@Override
+		public void onReceivePedometerData(PedometerData pData)
+		{
+			if(pData.getBatteryPercent() >0){
+				updateDevicePower(pData.getBatteryPercent());
+			}
+			updateNewDatMessage();
+			/**
+			 * Pedometer Measurement Data
+			 * A2 product
+			 */
+			showDeviceMeasuringData(pData);		}
+
+		@Override
+		public void onReceiveKitchenScaleData(KitchenScaleData kiScaleData)
+		{
+			// TODO Auto-generated method stub
+			updateNewDatMessage();
+			/**
+			 * Kitchen Scale Measurement Data
+			 */
+			showDeviceMeasuringData(kiScaleData);
+		}
+
+		@Override
+		public void onReceiveDeviceInfo(LsDeviceInfo lsDevice)
+		{
+			if(lsDevice==null || getActivity() == null)
+			{
+				return ;
+			}
+			Log.e("LS-BLE", "Demo-Update Device Info:"+lsDevice.toString());
+			//update and save device information
+			//AsyncTaskRunner runner = new AsyncTaskRunner(getActivity(),lsDevice);
+			//runner.execute();
+		}
+	};
+
+
+	/**
+	 * 更新设备的连接状态
+	 * @param connectState
+	 */
+	private void updateDeviceConnectState(final String broadcastID,final DeviceConnectState connectState) {
+
+
+		if (currentDevice != null && currentDevice.getBroadcastID().equalsIgnoreCase(broadcastID)) {
+
+
+			String stateStr = "Mac: [" + currentDevice.getMacAddress() + "]";
+
+			stateTextView.setTextColor(Color.BLACK);
+
+			if (connectState == DeviceConnectState.CONNECTED_SUCCESS
+					&& LsBleManager.getInstance().getLsBleManagerStatus() == ManagerStatus.DATA_RECEIVE) {
+
+				stateStr = "Connect Success";
+
+				stateTextView.setTextColor(Color.parseColor("#006400"));
+
+				connectingProgressBar.setVisibility(View.GONE);
+
+				stateTextView.setText(stateStr);
+
+			} else if (LsBleManager.getInstance().getLsBleManagerStatus() == ManagerStatus.DATA_RECEIVE) {
+				stateTextView.setText("Disconnect");
+				stateTextView.setTextColor(Color.RED);
+				connectingProgressBar.setVisibility(View.VISIBLE);
+
+			} else {
+
+				stateTextView.setText(stateStr);
+			}
+		}
+	}
+
+
 }

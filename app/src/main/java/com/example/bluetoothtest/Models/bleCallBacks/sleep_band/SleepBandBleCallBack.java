@@ -216,7 +216,7 @@ public class SleepBandBleCallBack extends BleModelCallBack implements OnProcessF
     @Override
     public void onRolloverStorageDataFinished() {
         mLastCommand = setTemperatureAndHumidityRealTimeData();
-        MainActivity.writeTextSucces("synchronisation terminées ... aller dans /Documents pour trouver les fichiers");
+        MainActivity.writeTextSucces("synchronisation terminées ... aller dans /Downloads pour trouver les fichiers");
         writeRXCharacteristic(mLastCommand);
     }
 
