@@ -165,7 +165,25 @@ public class ContourNextOneBleGattCallBack extends BleModelCallBack {
             passed = true;
             Log.i(TAG, "onIndicateSuccess" + mOperation);
             mOperation = ACCU_CHEK_GUIDE_OPERATION.GET_ALL_READING;
-            writeRXCharacteristic(getAllRecords());
+
+            BleManager.getInstance().write(mDevice
+                    , GLUCOSE_SERVICE
+                    , RECORDS_CHARACTERISTIC
+                    , getRecordNumber()
+                    , new BleWriteCallback() {
+                        @Override
+                        public void onWriteSuccess(int current, int total, byte[] justWrite) {
+                            Log.i(TAG, "onWriteSuccess " + total + "   " + current + " " + Arrays.toString(justWrite));
+
+
+                        }
+
+                        @Override
+                        public void onWriteFailure(BleException exception) {
+                            Log.i(TAG, "onWriteFailure" + exception.toString());
+                        }
+                    });
+
 
         }
 
@@ -178,6 +196,22 @@ public class ContourNextOneBleGattCallBack extends BleModelCallBack {
         public void onCharacteristicChanged(byte[] data) {
             Log.i(TAG + "################", Arrays.toString(data));
 
+            int commandType = data[0] & 0xFF;
+
+            switch (commandType) {
+                case 5:
+
+                    int recordNumber = data[2] & 0xFF;
+                    Log.i(TAG, "record number " + recordNumber);
+                    writeRXCharacteristic(getAllRecords());
+
+                    break;
+
+                default:
+                    // envoie pour enlever la popUp
+
+
+            }
         }
     };
 
@@ -219,6 +253,8 @@ public class ContourNextOneBleGattCallBack extends BleModelCallBack {
             @Override
             public void onCharacteristicChanged(byte[] data) {
                 Log.i(TAG, Arrays.toString(data));
+
+
                 final GlucoseReadingRx gtb = new GlucoseReadingRx(data, "Accu-check Adress");
                 String measure = gtb.toCustomString() + "  " + JoH.dateTimeText(gtb.time + gtb.offsetMs());
                 Log.i(TAG, measure);
@@ -226,6 +262,12 @@ public class ContourNextOneBleGattCallBack extends BleModelCallBack {
                 measureList.add(measure);
                 if (MainActivity.loadingDataListener != null)
                     MainActivity.loadingDataListener.onLoadDataIsFinish(measureList);
+
+
+
+
+
+
 
             }
         });
@@ -291,6 +333,9 @@ public class ContourNextOneBleGattCallBack extends BleModelCallBack {
         return new byte[]{OPCODE_REPORT_RECORDS, ALL_RECORDS};
     }
 
+    public static byte[] getRecordNumber() {
+        return new byte[]{0x04, 0x01};
+    }
 
     public enum ACCU_CHEK_GUIDE_OPERATION{
         GET_MANUFATURE_NAME,

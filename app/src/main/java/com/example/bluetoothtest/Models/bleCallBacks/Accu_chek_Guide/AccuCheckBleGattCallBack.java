@@ -22,6 +22,15 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * [1,1] Read all records
+ * [4,1] Number of records
+ * [1,6] Read last record received
+ * [1,5] Read first record
+ * [1,3,1,45,0] Read extract from record 45 onwards
+ *
+ */
+
 public class AccuCheckBleGattCallBack extends BleModelCallBack {
 
     public final static String TAG = AccuCheckBleGattCallBack.class.getSimpleName();
@@ -161,7 +170,25 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
             passed = true;
             Log.i(TAG, "onIndicateSuccess" + mOperation);
             mOperation = ACCU_CHEK_GUIDE_OPERATION.GET_ALL_READING;
-            writeRXCharacteristic(getAllRecords());
+
+            BleManager.getInstance().write(mDevice
+                    , GLUCOSE_SERVICE
+                    , RECORDS_CHARACTERISTIC
+                    , getRecordNumber()
+                    , new BleWriteCallback() {
+                        @Override
+                        public void onWriteSuccess(int current, int total, byte[] justWrite) {
+                            Log.i(TAG, "onWriteSuccess " + total + "   " + current + " " + Arrays.toString(justWrite));
+
+
+                        }
+
+                        @Override
+                        public void onWriteFailure(BleException exception) {
+                            Log.i(TAG, "onWriteFailure" + exception.toString());
+                        }
+                    });
+
 
         }
 
@@ -173,6 +200,24 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
         @Override
         public void onCharacteristicChanged(byte[] data) {
             Log.i(TAG + "################", Arrays.toString(data));
+
+            int commandType = data[0] & 0xFF;
+
+            switch (commandType) {
+                case 5:
+
+                    int recordNumber = data[2] & 0xFF;
+                    Log.i(TAG, "record number " + recordNumber);
+                    writeRXCharacteristic(getAllRecords());
+
+                    break;
+
+                default:
+                    // envoie pour enlever la popUp
+
+
+            }
+
 
         }
     };
@@ -287,6 +332,9 @@ public class AccuCheckBleGattCallBack extends BleModelCallBack {
         return new byte[]{OPCODE_REPORT_RECORDS, ALL_RECORDS};
     }
 
+    public static byte[] getRecordNumber() {
+        return new byte[]{0x04, 0x01};
+    }
 
     public enum ACCU_CHEK_GUIDE_OPERATION{
         GET_MANUFATURE_NAME,
